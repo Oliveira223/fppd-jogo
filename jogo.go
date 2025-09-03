@@ -18,6 +18,7 @@ type Elemento struct {
 type Jogo struct {
 	Mapa            [][]Elemento // grade 2D representando o mapa
 	PosX, PosY      int          // posição atual do personagem
+	Direcao         rune         // direção atual do personagem (w, a, s, d)
 	UltimoVisitado  Elemento     // elemento que estava na posição do personagem antes de mover
 	StatusMsg       string       // mensagem para a barra de status
 }
@@ -35,7 +36,11 @@ var (
 func jogoNovo() Jogo {
 	// O ultimo elemento visitado é inicializado como vazio
 	// pois o jogo começa com o personagem em uma posição vazia
-	return Jogo{UltimoVisitado: Vazio}
+	return Jogo{
+		UltimoVisitado: Vazio,
+		Direcao: 'd',
+	}
+	
 }
 
 // Lê um arquivo texto linha por linha e constrói o mapa do jogo

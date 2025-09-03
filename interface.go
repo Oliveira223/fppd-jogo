@@ -73,6 +73,9 @@ func interfaceDesenharJogo(jogo *Jogo) {
 	// Desenha a barra de status
 	interfaceDesenharBarraDeStatus(jogo)
 
+	// Desenha o indicador de direção
+	interfaceDesenharIndicadorDirecao(jogo)
+
 	// Força a atualização do terminal
 	interfaceAtualizarTela()
 }
@@ -90,6 +93,28 @@ func interfaceAtualizarTela() {
 // Desenha um elemento na posição (x, y)
 func interfaceDesenharElemento(x, y int, elem Elemento) {
 	termbox.SetCell(x, y, elem.simbolo, elem.cor, elem.corFundo)
+}
+
+
+// Indica a direção do personagem
+func interfaceDesenharIndicadorDirecao(jogo *Jogo) {
+	dx, dy := 0, 0
+	switch jogo.Direcao {
+	case 'w': dy = -1
+	case 'a': dx = -1
+	case 's': dy = 1
+	case 'd': dx = 1
+	}
+	
+	indicadorX := jogo.PosX + dx
+	indicadorY := jogo.PosY + dy
+	
+	// Só desenha se estiver dentro dos limites e não for parede
+	if indicadorY >= 0 && indicadorY < len(jogo.Mapa) && 
+	   indicadorX >= 0 && indicadorX < len(jogo.Mapa[indicadorY]) &&
+	   !jogo.Mapa[indicadorY][indicadorX].tangivel {
+		interfaceDesenharElemento(indicadorX, indicadorY, Direcao)
+	}
 }
 
 // Exibe uma barra de status com informações úteis ao jogador

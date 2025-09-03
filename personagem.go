@@ -1,7 +1,10 @@
 // personagem.go - Funções para movimentação e ações do personagem
 package main
 
-import "fmt"
+import (
+	"time"
+	"fmt"
+)
 
 // Atualiza a posição do personagem com base na tecla pressionada (WASD)
 func personagemMover(tecla rune, jogo *Jogo) {
@@ -18,6 +21,39 @@ func personagemMover(tecla rune, jogo *Jogo) {
 	if jogoPodeMoverPara(jogo, nx, ny) {
 		jogoMoverElemento(jogo, jogo.PosX, jogo.PosY, dx, dy)
 		jogo.PosX, jogo.PosY = nx, ny
+	}
+}
+
+// Função para atirar
+func atirar(jogo *Jogo, x, y int){
+	dx, dy := 0, 0
+	switch jogo.Direcao {
+	case 'w': dy = -1 // atira para cima
+	case 'a': dx = -1 // atira para a esquerda
+	case 's': dy = 1  // atira para baixo
+	case 'd': dx = 1  // atira para a direita
+	}
+
+	for i := 1; i <= 30; i++ {
+		tiroX, tiroY := x+(dx*i), y+(dy*i)
+		
+		// Verifica se o tiro saiu dos limites do mapa
+		if tiroY < 0 || tiroY >= len(jogo.Mapa) || tiroX < 0 || tiroX >= len(jogo.Mapa[tiroY]) {
+			break
+		}
+		
+		// Verifica se atingiu uma parede
+		if jogo.Mapa[tiroY][tiroX].tangivel {
+			break
+		}
+
+		// Desenha o tiro
+		jogo.Mapa[tiroY][tiroX] = Vegetacao
+		interfaceDesenharJogo(jogo)
+		time.Sleep(100 * time.Millisecond)
+		
+		// Apaga o tiro (restaura o elemento original)
+		jogo.Mapa[tiroY][tiroX] = Vazio
 	}
 }
 
