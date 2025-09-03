@@ -1,7 +1,9 @@
 // main.go - Loop principal do jogo
 package main
 
-import "os"
+import (
+	"os"
+)
 
 func main() {
 	// Inicializa a interface (termbox)
@@ -19,16 +21,20 @@ func main() {
 	if err := jogoCarregarMapa(mapaFile, &jogo); err != nil {
 		panic(err)
 	}
+	//receber inimigos para a execucao
 
 	// Desenha o estado inicial do jogo
 	interfaceDesenharJogo(&jogo)
 
 	// Loop principal de entrada
 	for {
-		evento := interfaceLerEventoTeclado()
+			evento := interfaceLerEventoTeclado()
+		select{
 		if continuar := personagemExecutarAcao(evento, &jogo); !continuar {
 			break
 		}
+		inimigoExecutarAcao(&jogo)
+
 		interfaceDesenharJogo(&jogo)
 	}
 }

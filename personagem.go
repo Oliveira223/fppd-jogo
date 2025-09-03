@@ -1,16 +1,22 @@
 // personagem.go - Funções para movimentação e ações do personagem
 package main
 
-import "fmt"
+import (
+	"time"
+)
 
 // Atualiza a posição do personagem com base na tecla pressionada (WASD)
 func personagemMover(tecla rune, jogo *Jogo) {
 	dx, dy := 0, 0
 	switch tecla {
-	case 'w': dy = -1 // Move para cima
-	case 'a': dx = -1 // Move para a esquerda
-	case 's': dy = 1  // Move para baixo
-	case 'd': dx = 1  // Move para a direita
+	case 'w':
+		dy = -1 // Move para cima
+	case 'a':
+		dx = -1 // Move para a esquerda
+	case 's':
+		dy = 1 // Move para baixo
+	case 'd':
+		dx = 1 // Move para a direita
 	}
 
 	nx, ny := jogo.PosX+dx, jogo.PosY+dy
@@ -18,6 +24,16 @@ func personagemMover(tecla rune, jogo *Jogo) {
 	if jogoPodeMoverPara(jogo, nx, ny) {
 		jogoMoverElemento(jogo, jogo.PosX, jogo.PosY, dx, dy)
 		jogo.PosX, jogo.PosY = nx, ny
+
+	}
+}
+
+func atirar(jogo *Jogo, x, y int) {
+	for i := 0; i < 30; i++ {
+
+		jogo.Mapa[y][x+i] = Vegetacao
+		interfaceDesenharJogo(jogo)
+		time.Sleep(50 * time.Millisecond)
 	}
 }
 
@@ -26,7 +42,8 @@ func personagemMover(tecla rune, jogo *Jogo) {
 // Você pode expandir essa função para incluir lógica de interação com objetos
 func personagemInteragir(jogo *Jogo) {
 	// Atualmente apenas exibe uma mensagem de status
-	jogo.StatusMsg = fmt.Sprintf("Interagindo em (%d, %d)", jogo.PosX, jogo.PosY)
+	go atirar(jogo, jogo.PosX, jogo.PosY)
+	//jogo.StatusMsg = fmt.Sprintf("Interagindo em (%d, %d)", jogo.PosX, jogo.PosY)
 }
 
 // Processa o evento do teclado e executa a ação correspondente
