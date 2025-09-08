@@ -14,7 +14,10 @@ func main() {
 		mapaFile = os.Args[1]
 	}
 
-	// Inicializa o jogo
+	if(true){
+		go piscarcor(Cura.cor)
+	}
+		// Inicializa o jogo
 	jogo := jogoNovo()
 	if err := jogoCarregarMapa(mapaFile, &jogo); err != nil {
 		panic(err)

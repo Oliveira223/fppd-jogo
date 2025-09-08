@@ -21,6 +21,7 @@ const (
 	CorParede         = termbox.ColorBlack | termbox.AttrBold | termbox.AttrDim
 	CorFundoParede    = termbox.ColorDarkGray
 	CorTexto          = termbox.ColorDarkGray
+	CorBranco        = termbox.ColorWhite
 )
 
 // EventoTeclado representa uma ação detectada do teclado (como mover, sair ou interagir)

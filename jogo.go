@@ -30,6 +30,7 @@ var (
 	Parede     = Elemento{'▤', CorParede, CorFundoParede, true}
 	Vegetacao  = Elemento{'♣', CorVerde, CorPadrao, false}
 	Vazio      = Elemento{' ', CorPadrao, CorPadrao, false}
+	Cura       = Elemento{'+', CorVerdeClaro, CorPadrao, false}
 )
 
 // Cria e retorna uma nova instância do jogo
@@ -41,6 +42,12 @@ func jogoNovo() Jogo {
 		Direcao: 'd',
 	}
 	
+}
+
+func piscarcor(cor cor) {
+	cor = CorBranco
+	sleep(2 * time.second)
+	cor = CorPadrao
 }
 
 // Lê um arquivo texto linha por linha e constrói o mapa do jogo
