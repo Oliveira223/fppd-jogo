@@ -5,9 +5,9 @@ import (
 	"bufio"
 	"os"
 	"sync"
-	"fmt"
 )
-	bla sync.Mutex
+
+var bla sync.Mutex
 
 // Elemento representa qualquer objeto do mapa (parede, personagem, vegetação, etc)
 type Elemento struct {
@@ -23,7 +23,7 @@ type Jogo struct {
 	PosX, PosY     int          // posição atual do personagem
 	UltimoVisitado Elemento     // elemento que estava na posição do personagem antes de mover
 	StatusMsg      string       // mensagem para a barra de status
-	xInim, yInim   []int        // posicoes dos inimigos
+	xInim, yInim   int          // posicoes dos inimigos
 }
 
 // Elementos visuais do jogo
@@ -62,7 +62,7 @@ func jogoCarregarMapa(nome string, jogo *Jogo) error {
 				e = Parede
 			case Inimigo.simbolo:
 				e = Inimigo
-				jogo.xInim, jogo.yInim = append(jogo.xInim, x), append(jogo.yInim, y)
+				jogo.xInim, jogo.yInim = x, y // registra a posição inicial do inimigo
 			case Vegetacao.simbolo:
 				e = Vegetacao
 			case Personagem.simbolo:

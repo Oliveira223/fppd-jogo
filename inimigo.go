@@ -8,28 +8,27 @@ import (
 
 // Atualiza a posição do inimigo aleatoriamente
 func inimigoMover(jogo *Jogo) {
-	for i := 0; i < len(jogo.xInim); i++ {
-		dx, dy := 0, 0
-		d := rand.IntN(3)
-		switch d {
-		case 0:
-			dy = -1 // Move para cima
-		case 1:
-			dx = -1 // Move para a esquerda
-		case 2:
-			dy = 1 // Move para baixo
-		case 3:
-			dx = 1 // Move para a direita
-		}
 
-		nx, ny := jogo.xInim[i]+dx, jogo.yInim[i]+dy
-		// Verifica se o movimento é permitido e realiza a movimentação
-		if jogoPodeMoverPara(jogo, nx, ny) {
-			jogoMoverElemento(jogo, jogo.xInim[i], jogo.yInim[i], dx, dy)
-			jogo.StatusMsg = fmt.Sprintf("Atualizando inimigo em (%d, %d)", jogo.xInim[i], jogo.yInim[i])
-			jogo.xInim[i], jogo.yInim[i] = nx, ny
-		}
+	dx, dy := 0, 0
+	d := rand.IntN(4)
+	switch d {
+	case 0:
+		dy = -1 // Move para cima
+	case 1:
+		dx = -1 // Move para a esquerda
+	case 2:
+		dy = 1 // Move para baixo
+	case 3:
+		dx = 1 // Move para a direita
 	}
+	nx, ny := jogo.xInim+dx, jogo.yInim+dy
+	// Verifica se o movimento é permitido e realiza a movimentação
+	if jogoPodeMoverPara(jogo, nx, ny) {
+		jogoMoverElemento(jogo, jogo.xInim, jogo.yInim, dx, dy)
+		jogo.StatusMsg = fmt.Sprintf("Atualizando inimigo em (%d, %d) \n direção do inimigo: %d", jogo.xInim, jogo.yInim, d)
+		jogo.xInim, jogo.yInim = nx, ny
+	}
+
 }
 
 // inimigo detecta personagem, ou scanear em volta do personagem e se tiver um inimigo próximo, mandar ele perseguir?

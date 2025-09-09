@@ -3,6 +3,7 @@ package main
 
 import (
 	"os"
+	"time"
 )
 
 func main() {
@@ -21,20 +22,23 @@ func main() {
 	if err := jogoCarregarMapa(mapaFile, &jogo); err != nil {
 		panic(err)
 	}
-	//receber inimigos para a execucao
-
+	go func() {
+		for {
+			inimigoExecutarAcao(&jogo)
+			interfaceDesenharJogo(&jogo)
+			time.Sleep(500 * time.Millisecond) // Ajuste o intervalo como quiser
+		}
+	}()
 	// Desenha o estado inicial do jogo
 	interfaceDesenharJogo(&jogo)
 
 	// Loop principal de entrada
 	for {
-			evento := interfaceLerEventoTeclado()
-		select{
+		evento := interfaceLerEventoTeclado()
 		if continuar := personagemExecutarAcao(evento, &jogo); !continuar {
 			break
 		}
 		inimigoExecutarAcao(&jogo)
-
 		interfaceDesenharJogo(&jogo)
 	}
 }
