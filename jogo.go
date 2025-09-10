@@ -4,23 +4,24 @@ package main
 import (
 	"bufio"
 	"os"
+	"time"
 )
 
 // Elemento representa qualquer objeto do mapa (parede, personagem, vegetação, etc)
 type Elemento struct {
-	simbolo   rune
-	cor       Cor
-	corFundo  Cor
-	tangivel  bool // Indica se o elemento bloqueia passagem
+	simbolo  rune
+	cor      Cor
+	corFundo Cor
+	tangivel bool // Indica se o elemento bloqueia passagem
 }
 
 // Jogo contém o estado atual do jogo
 type Jogo struct {
-	Mapa            [][]Elemento // grade 2D representando o mapa
-	PosX, PosY      int          // posição atual do personagem
-	Direcao         rune         // direção atual do personagem (w, a, s, d)
-	UltimoVisitado  Elemento     // elemento que estava na posição do personagem antes de mover
-	StatusMsg       string       // mensagem para a barra de status
+	Mapa           [][]Elemento // grade 2D representando o mapa
+	PosX, PosY     int          // posição atual do personagem
+	Direcao        rune         // direção atual do personagem (w, a, s, d)
+	UltimoVisitado Elemento     // elemento que estava na posição do personagem antes de mover
+	StatusMsg      string       // mensagem para a barra de status
 }
 
 // Elementos visuais do jogo
@@ -30,7 +31,7 @@ var (
 	Parede     = Elemento{'▤', CorParede, CorFundoParede, true}
 	Vegetacao  = Elemento{'♣', CorVerde, CorPadrao, false}
 	Vazio      = Elemento{' ', CorPadrao, CorPadrao, false}
-	Cura       = Elemento{'+', CorVerdeClaro, CorPadrao, false}
+	Cura       = Elemento{'+', CorVerde, CorPadrao, false}
 )
 
 // Cria e retorna uma nova instância do jogo
@@ -39,15 +40,33 @@ func jogoNovo() Jogo {
 	// pois o jogo começa com o personagem em uma posição vazia
 	return Jogo{
 		UltimoVisitado: Vazio,
-		Direcao: 'd',
+		Direcao:        'd',
 	}
-	
+
 }
 
-func piscarcor(cor cor) {
-	cor = CorBranco
-	sleep(2 * time.second)
-	cor = CorPadrao
+func piscarcor(jogo *Jogo) {
+	pisca := false
+	for {
+		var novaCor Cor
+		if pisca {
+			novaCor = CorBranco
+		} else {
+			novaCor = CorVerde 
+		}
+		pisca = !pisca
+
+		for y := range jogo.Mapa {
+			for x := range jogo.Mapa[y] {
+				if jogo.Mapa[y][x].simbolo == Cura.simbolo {
+					jogo.Mapa[y][x].cor = novaCor
+				}
+			}
+		}
+
+		interfaceDesenharJogo(jogo)
+		time.Sleep(1000 * time.Millisecond)
+	}
 }
 
 // Lê um arquivo texto linha por linha e constrói o mapa do jogo
@@ -66,6 +85,8 @@ func jogoCarregarMapa(nome string, jogo *Jogo) error {
 		for x, ch := range linha {
 			e := Vazio
 			switch ch {
+			case Cura.simbolo:
+				e = Cura
 			case Parede.simbolo:
 				e = Parede
 			case Inimigo.simbolo:
@@ -114,7 +135,7 @@ func jogoMoverElemento(jogo *Jogo, x, y, dx, dy int) {
 	// Obtem elemento atual na posição
 	elemento := jogo.Mapa[y][x] // guarda o conteúdo atual da posição
 
-	jogo.Mapa[y][x] = jogo.UltimoVisitado     // restaura o conteúdo anterior
-	jogo.UltimoVisitado = jogo.Mapa[ny][nx]   // guarda o conteúdo atual da nova posição
-	jogo.Mapa[ny][nx] = elemento              // move o elemento
+	jogo.Mapa[y][x] = jogo.UltimoVisitado   // restaura o conteúdo anterior
+	jogo.UltimoVisitado = jogo.Mapa[ny][nx] // guarda o conteúdo atual da nova posição
+	jogo.Mapa[ny][nx] = elemento            // move o elemento
 }

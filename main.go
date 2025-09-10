@@ -14,10 +14,7 @@ func main() {
 		mapaFile = os.Args[1]
 	}
 
-	if(true){
-		go piscarcor(Cura.cor)
-	}
-		// Inicializa o jogo
+	// Inicializa o jogo
 	jogo := jogoNovo()
 	if err := jogoCarregarMapa(mapaFile, &jogo); err != nil {
 		panic(err)
@@ -25,6 +22,8 @@ func main() {
 
 	// Desenha o estado inicial do jogo
 	interfaceDesenharJogo(&jogo)
+
+	go piscarcor(&jogo)
 
 	// Loop principal de entrada
 	for {

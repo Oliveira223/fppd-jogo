@@ -114,7 +114,7 @@ func interfaceDesenharIndicadorDirecao(jogo *Jogo) {
 	if indicadorY >= 0 && indicadorY < len(jogo.Mapa) && 
 	   indicadorX >= 0 && indicadorX < len(jogo.Mapa[indicadorY]) &&
 	   !jogo.Mapa[indicadorY][indicadorX].tangivel {
-		interfaceDesenharElemento(indicadorX, indicadorY, Direcao)
+	//	interfaceDesenharElemento(indicadorX, indicadorY, Direcao)
 	}
 }
 
