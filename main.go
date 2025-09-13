@@ -22,11 +22,12 @@ func main() {
 	if err := jogoCarregarMapa(mapaFile, &jogo); err != nil {
 		panic(err)
 	}
+
 	go func() {
 		for {
 			inimigoExecutarAcao(&jogo)
 			interfaceDesenharJogo(&jogo)
-			time.Sleep(500 * time.Millisecond) // Ajuste o intervalo como quiser
+			time.Sleep(500 * time.Millisecond) // velocidade de movimentação do inimigo
 		}
 	}()
 	// Desenha o estado inicial do jogo
@@ -38,7 +39,6 @@ func main() {
 		if continuar := personagemExecutarAcao(evento, &jogo); !continuar {
 			break
 		}
-		inimigoExecutarAcao(&jogo)
 		interfaceDesenharJogo(&jogo)
 	}
 }

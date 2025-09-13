@@ -58,6 +58,10 @@ func interfaceLerEventoTeclado() EventoTeclado {
 
 // Renderiza todo o estado atual do jogo na tela
 func interfaceDesenharJogo(jogo *Jogo) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	// Limpa a tela antes de desenhar
 	interfaceLimparTela()
 
 	// Desenha todos os elementos do mapa
@@ -67,11 +71,10 @@ func interfaceDesenharJogo(jogo *Jogo) {
 		}
 	}
 
-	// Desenha o inimigo
-	interfaceDesenharElemento(jogo.xInim, jogo.yInim, Inimigo)
-
-	// Desenha o personagem sobre o mapa
-	interfaceDesenharElemento(jogo.PosX, jogo.PosY, Personagem)
+	// Desenha entidades
+	for i := 0; i < len(jogo.Entidades); i++ {
+		interfaceDesenharElemento(jogo.Entidades[i].X, jogo.Entidades[i].Y, jogo.Entidades[i].Sprite)
+	}
 
 	// Desenha a barra de status
 	interfaceDesenharBarraDeStatus(jogo)

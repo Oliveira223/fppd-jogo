@@ -3,11 +3,12 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"sync"
 )
 
-var bla sync.Mutex
+var mu sync.Mutex
 
 // Elemento representa qualquer objeto do mapa (parede, personagem, vegetação, etc)
 type Elemento struct {
@@ -17,13 +18,17 @@ type Elemento struct {
 	tangivel bool // Indica se o elemento bloqueia passagem
 }
 
+type Entidade struct {
+	Sprite         Elemento
+	X, Y           int
+	UltimoVisitado Elemento
+}
+
 // Jogo contém o estado atual do jogo
 type Jogo struct {
-	Mapa           [][]Elemento // grade 2D representando o mapa
-	PosX, PosY     int          // posição atual do personagem
-	UltimoVisitado Elemento     // elemento que estava na posição do personagem antes de mover
-	StatusMsg      string       // mensagem para a barra de status
-	xInim, yInim   int          // posicoes dos inimigos
+	Mapa      [][]Elemento // grade 2D representando o mapa
+	StatusMsg string       // mensagem para a barra de status
+	Entidades []Entidade   // posicoes dos inimigos e jogador ([0] é o jogador)
 }
 
 // Elementos visuais do jogo
@@ -39,7 +44,7 @@ var (
 func jogoNovo() Jogo {
 	// O ultimo elemento visitado é inicializado como vazio
 	// pois o jogo começa com o personagem em uma posição vazia
-	return Jogo{UltimoVisitado: Vazio}
+	return Jogo{}
 }
 
 // Lê um arquivo texto linha por linha e constrói o mapa do jogo
@@ -61,12 +66,17 @@ func jogoCarregarMapa(nome string, jogo *Jogo) error {
 			case Parede.simbolo:
 				e = Parede
 			case Inimigo.simbolo:
-				e = Inimigo
-				jogo.xInim, jogo.yInim = x, y // registra a posição inicial do inimigo
+				ent := Entidade{X: x, Y: y, UltimoVisitado: e, Sprite: Inimigo}
+				jogo.Entidades = append(jogo.Entidades, ent) // Adiciona inimigo
+				e = Vazio
 			case Vegetacao.simbolo:
 				e = Vegetacao
 			case Personagem.simbolo:
-				jogo.PosX, jogo.PosY = x, y // registra a posição inicial do personagem
+				ent := Entidade{X: x, Y: y, UltimoVisitado: e, Sprite: Personagem}
+				jogo.Entidades = append([]Entidade{ent}, jogo.Entidades...) // Adiciona personagem no início
+				e = Vazio
+				// O personagem é o primeiro elemento em jogo.Entidades[0]
+				// Outros inimigos são adicionados a partir do índice 1
 			}
 			linhaElems = append(linhaElems, e)
 		}
@@ -76,6 +86,8 @@ func jogoCarregarMapa(nome string, jogo *Jogo) error {
 	if err := scanner.Err(); err != nil {
 		return err
 	}
+	jogo.StatusMsg = fmt.Sprintf("%d inimigos lidos", len(jogo.Entidades)-1)
+
 	return nil
 }
 
@@ -102,15 +114,26 @@ func jogoPodeMoverPara(jogo *Jogo, x, y int) bool {
 
 // Move um elemento para a nova posição
 func jogoMoverElemento(jogo *Jogo, x, y, dx, dy int) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	// Calcula nova posição
 	nx, ny := x+dx, y+dy
+	for i := range jogo.Entidades {
+		if jogo.Entidades[i].X == x && jogo.Entidades[i].Y == y {
+			jogo.Mapa[y][x] = jogo.Entidades[i].UltimoVisitado
 
-	// Obtem elemento atual na posição
+			jogo.Entidades[i].UltimoVisitado = jogo.Mapa[ny][nx]
+			// Atualiza posição da entidade
+			jogo.Entidades[i].X, jogo.Entidades[i].Y = nx, ny
+			return
+		}
+	}
+	/*// Obtem elemento atual na posição
 	elemento := jogo.Mapa[y][x] // guarda o conteúdo atual da posição
-
-	bla.Lock()
-	defer bla.Unlock()
 
 	jogo.Mapa[y][x] = jogo.UltimoVisitado   // restaura o conteúdo anterior
 	jogo.UltimoVisitado = jogo.Mapa[ny][nx] // guarda o conteúdo atual da nova posição
-	jogo.Mapa[ny][nx] = elemento            // move o elemento
+	jogo.Mapa[ny][nx] = elemento            // move o elemento*/
+
 }

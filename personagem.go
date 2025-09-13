@@ -19,12 +19,10 @@ func personagemMover(tecla rune, jogo *Jogo) {
 		dx = 1 // Move para a direita
 	}
 
-	nx, ny := jogo.PosX+dx, jogo.PosY+dy
+	nx, ny := jogo.Entidades[0].X+dx, jogo.Entidades[0].Y+dy
 	// Verifica se o movimento é permitido e realiza a movimentação
 	if jogoPodeMoverPara(jogo, nx, ny) {
-		jogoMoverElemento(jogo, jogo.PosX, jogo.PosY, dx, dy)
-		jogo.PosX, jogo.PosY = nx, ny
-
+		jogoMoverElemento(jogo, jogo.Entidades[0].X, jogo.Entidades[0].Y, dx, dy)
 	}
 }
 
@@ -42,7 +40,7 @@ func atirar(jogo *Jogo, x, y int) {
 // Você pode expandir essa função para incluir lógica de interação com objetos
 func personagemInteragir(jogo *Jogo) {
 	// Atualmente apenas exibe uma mensagem de status
-	go atirar(jogo, jogo.PosX, jogo.PosY)
+	go atirar(jogo, jogo.Entidades[0].X, jogo.Entidades[0].Y)
 	//jogo.StatusMsg = fmt.Sprintf("Interagindo em (%d, %d)", jogo.PosX, jogo.PosY)
 }
 
