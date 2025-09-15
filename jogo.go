@@ -3,7 +3,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"sync"
 )
@@ -86,7 +85,7 @@ func jogoCarregarMapa(nome string, jogo *Jogo) error {
 	if err := scanner.Err(); err != nil {
 		return err
 	}
-	jogo.StatusMsg = fmt.Sprintf("%d inimigos lidos", len(jogo.Entidades)-1)
+	//jogo.StatusMsg = fmt.Sprintf("%d inimigos lidos", len(jogo.Entidades)-1)
 
 	return nil
 }
@@ -108,27 +107,30 @@ func jogoPodeMoverPara(jogo *Jogo, x, y int) bool {
 		return false
 	}
 
+	// Verifica se já existe alguma entidade nessa posição
+	for _, ent := range jogo.Entidades {
+		if ent.X == x && ent.Y == y {
+			return false
+		}
+	}
+
 	// Pode mover para a posição
 	return true
 }
 
 // Move um elemento para a nova posição
-func jogoMoverElemento(jogo *Jogo, x, y, dx, dy int) {
+func jogoMoverElemento(jogo *Jogo, x, y, dx, dy int, ent *Entidade) {
 	mu.Lock()
 	defer mu.Unlock()
 
 	// Calcula nova posição
 	nx, ny := x+dx, y+dy
-	for i := range jogo.Entidades {
-		if jogo.Entidades[i].X == x && jogo.Entidades[i].Y == y {
-			jogo.Mapa[y][x] = jogo.Entidades[i].UltimoVisitado
+	jogo.Mapa[y][x] = ent.UltimoVisitado
 
-			jogo.Entidades[i].UltimoVisitado = jogo.Mapa[ny][nx]
-			// Atualiza posição da entidade
-			jogo.Entidades[i].X, jogo.Entidades[i].Y = nx, ny
-			return
-		}
-	}
+	ent.UltimoVisitado = jogo.Mapa[ny][nx]
+	// Atualiza posição da entidade
+	ent.X, ent.Y = nx, ny
+
 	/*// Obtem elemento atual na posição
 	elemento := jogo.Mapa[y][x] // guarda o conteúdo atual da posição
 

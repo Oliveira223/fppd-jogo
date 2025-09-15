@@ -22,7 +22,7 @@ func personagemMover(tecla rune, jogo *Jogo) {
 	nx, ny := jogo.Entidades[0].X+dx, jogo.Entidades[0].Y+dy
 	// Verifica se o movimento é permitido e realiza a movimentação
 	if jogoPodeMoverPara(jogo, nx, ny) {
-		jogoMoverElemento(jogo, jogo.Entidades[0].X, jogo.Entidades[0].Y, dx, dy)
+		jogoMoverElemento(jogo, jogo.Entidades[0].X, jogo.Entidades[0].Y, dx, dy, &jogo.Entidades[0])
 	}
 }
 
