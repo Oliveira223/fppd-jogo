@@ -5,7 +5,10 @@ import (
 	"bufio"
 	"os"
 	"time"
+	"sync"
 )
+
+var mu sync.Mutex
 
 // Elemento representa qualquer objeto do mapa (parede, personagem, vegetação, etc)
 type Elemento struct {
@@ -15,13 +18,18 @@ type Elemento struct {
 	tangivel bool // Indica se o elemento bloqueia passagem
 }
 
+type Entidade struct {
+	Sprite         Elemento
+	X, Y           int
+	UltimoVisitado Elemento
+}
+
 // Jogo contém o estado atual do jogo
 type Jogo struct {
 	Mapa           [][]Elemento // grade 2D representando o mapa
-	PosX, PosY     int          // posição atual do personagem
 	Direcao        rune         // direção atual do personagem (w, a, s, d)
-	UltimoVisitado Elemento     // elemento que estava na posição do personagem antes de mover
 	StatusMsg      string       // mensagem para a barra de status
+	Entidades      []Entidade   // posicoes dos inimigos e jogador ([0] é o jogador)
 }
 
 // Elementos visuais do jogo
@@ -32,6 +40,7 @@ var (
 	Vegetacao  = Elemento{'♣', CorVerde, CorPadrao, false}
 	Vazio      = Elemento{' ', CorPadrao, CorPadrao, false}
 	Cura       = Elemento{'+', CorVerde, CorPadrao, false}
+	Direcao    = Elemento{'•', CorCinzaEscuro, CorPadrao, false} 
 )
 
 // Cria e retorna uma nova instância do jogo
@@ -39,10 +48,9 @@ func jogoNovo() Jogo {
 	// O ultimo elemento visitado é inicializado como vazio
 	// pois o jogo começa com o personagem em uma posição vazia
 	return Jogo{
-		UltimoVisitado: Vazio,
-		Direcao:        'd',
+		Direcao:   'd',
+		Entidades: []Entidade{},
 	}
-
 }
 
 func piscarcor(jogo *Jogo) {
@@ -90,11 +98,17 @@ func jogoCarregarMapa(nome string, jogo *Jogo) error {
 			case Parede.simbolo:
 				e = Parede
 			case Inimigo.simbolo:
-				e = Inimigo
+				ent := Entidade{X: x, Y: y, UltimoVisitado: e, Sprite: Inimigo}
+				jogo.Entidades = append(jogo.Entidades, ent) // Adiciona inimigo
+				e = Vazio
 			case Vegetacao.simbolo:
 				e = Vegetacao
 			case Personagem.simbolo:
-				jogo.PosX, jogo.PosY = x, y // registra a posição inicial do personagem
+				ent := Entidade{X: x, Y: y, UltimoVisitado: e, Sprite: Personagem}
+				jogo.Entidades = append([]Entidade{ent}, jogo.Entidades...) // Adiciona personagem no início
+				e = Vazio
+				// O personagem é o primeiro elemento em jogo.Entidades[0]
+				// Outros inimigos são adicionados a partir do índice 1
 			}
 			linhaElems = append(linhaElems, e)
 		}
@@ -124,18 +138,27 @@ func jogoPodeMoverPara(jogo *Jogo, x, y int) bool {
 		return false
 	}
 
+	// Verifica se já existe alguma entidade nessa posição
+	for _, ent := range jogo.Entidades {
+		if ent.X == x && ent.Y == y {
+			return false
+		}
+	}
+
 	// Pode mover para a posição
 	return true
 }
 
 // Move um elemento para a nova posição
-func jogoMoverElemento(jogo *Jogo, x, y, dx, dy int) {
+func jogoMoverElemento(jogo *Jogo, x, y, dx, dy int, ent *Entidade) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	// Calcula nova posição
 	nx, ny := x+dx, y+dy
+	jogo.Mapa[y][x] = ent.UltimoVisitado
 
-	// Obtem elemento atual na posição
-	elemento := jogo.Mapa[y][x] // guarda o conteúdo atual da posição
-
-	jogo.Mapa[y][x] = jogo.UltimoVisitado   // restaura o conteúdo anterior
-	jogo.UltimoVisitado = jogo.Mapa[ny][nx] // guarda o conteúdo atual da nova posição
-	jogo.Mapa[ny][nx] = elemento            // move o elemento
+	ent.UltimoVisitado = jogo.Mapa[ny][nx]
+	// Atualiza posição da entidade
+	ent.X, ent.Y = nx, ny
 }
