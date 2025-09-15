@@ -16,11 +16,13 @@ func personagemMover(tecla rune, jogo *Jogo) {
 	case 'd': dx = 1  // Move para a direita
 	}
 
-	nx, ny := jogo.PosX+dx, jogo.PosY+dy
+	// Atualiza a direção do personagem com a tecla pressionada
+	jogo.Direcao = tecla
+
+	nx, ny := jogo.Entidades[0].X+dx, jogo.Entidades[0].Y+dy
 	// Verifica se o movimento é permitido e realiza a movimentação
 	if jogoPodeMoverPara(jogo, nx, ny) {
-		jogoMoverElemento(jogo, jogo.PosX, jogo.PosY, dx, dy)
-		jogo.PosX, jogo.PosY = nx, ny
+		jogoMoverElemento(jogo, jogo.Entidades[0].X, jogo.Entidades[0].Y, dx, dy, &jogo.Entidades[0])
 	}
 }
 
@@ -62,7 +64,7 @@ func atirar(jogo *Jogo, x, y int){
 // Você pode expandir essa função para incluir lógica de interação com objetos
 func personagemInteragir(jogo *Jogo) {
 	// Atualmente apenas exibe uma mensagem de status
-	jogo.StatusMsg = fmt.Sprintf("Interagindo em (%d, %d)", jogo.PosX, jogo.PosY)
+	jogo.StatusMsg = fmt.Sprintf("Interagindo em (%d, %d)", jogo.Entidades[0].X, jogo.Entidades[0].Y)
 }
 
 // Processa o evento do teclado e executa a ação correspondente

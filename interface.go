@@ -21,6 +21,7 @@ const (
 	CorParede         = termbox.ColorBlack | termbox.AttrBold | termbox.AttrDim
 	CorFundoParede    = termbox.ColorDarkGray
 	CorTexto          = termbox.ColorDarkGray
+	CorBranco        = termbox.ColorWhite
 )
 
 // EventoTeclado representa uma ação detectada do teclado (como mover, sair ou interagir)
@@ -67,8 +68,10 @@ func interfaceDesenharJogo(jogo *Jogo) {
 		}
 	}
 
-	// Desenha o personagem sobre o mapa
-	interfaceDesenharElemento(jogo.PosX, jogo.PosY, Personagem)
+	// Desenha entidades
+	for i := 0; i < len(jogo.Entidades); i++ {
+		interfaceDesenharElemento(jogo.Entidades[i].X, jogo.Entidades[i].Y, jogo.Entidades[i].Sprite)
+	}
 
 	// Desenha a barra de status
 	interfaceDesenharBarraDeStatus(jogo)
@@ -106,13 +109,22 @@ func interfaceDesenharIndicadorDirecao(jogo *Jogo) {
 	case 'd': dx = 1
 	}
 	
-	indicadorX := jogo.PosX + dx
-	indicadorY := jogo.PosY + dy
+	indicadorX := jogo.Entidades[0].X + dx
+	indicadorY := jogo.Entidades[0].Y + dy
 	
-	// Só desenha se estiver dentro dos limites e não for parede
+	// Verifica se há um inimigo na posição do indicador
+	temInimigo := false
+	for i := 1; i < len(jogo.Entidades); i++ {
+		if jogo.Entidades[i].X == indicadorX && jogo.Entidades[i].Y == indicadorY {
+			temInimigo = true
+			break
+		}
+	}
+	
+	// Só desenha se estiver dentro dos limites, não for parede e não tiver inimigo
 	if indicadorY >= 0 && indicadorY < len(jogo.Mapa) && 
-	   indicadorX >= 0 && indicadorX < len(jogo.Mapa[indicadorY]) &&
-	   !jogo.Mapa[indicadorY][indicadorX].tangivel {
+	   indicadorX >= 0 && indicadorX < len(jogo.Mapa[indicadorY]) && 
+	   !jogo.Mapa[indicadorY][indicadorX].tangivel && !temInimigo {
 		interfaceDesenharElemento(indicadorX, indicadorY, Direcao)
 	}
 }
