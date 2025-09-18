@@ -63,6 +63,23 @@ func atirar(jogo *Jogo, x, y int){
 func personagemInteragir(jogo *Jogo) {
 	// Atualmente apenas exibe uma mensagem de status
 	jogo.StatusMsg = fmt.Sprintf("Interagindo em (%d, %d)", jogo.PosX, jogo.PosY)
+	if !jogo.BombaAtiva {
+		// 1. Se não houver bomba ativa, planta uma nova
+		jogo.BombaAtiva = true
+		bombaX, bombaY := jogo.PosX, jogo.PosY
+
+		// 2. Envia uma solicitação para colocar a bomba no mapa
+		// Esta é a comunicação do personagem com o gerenciador de estado. 
+		jogo.AcessoMapa <- AtualizacaoMapa{X: bombaX, Y: bombaY, Elem: Bomba}
+		jogo.StatusMsg = "Bomba plantada! Corra!"
+
+		// 3. Inicia a goroutine da bomba, que cuidará da explosão
+		go gerenciarBomba(jogo, bombaX, bombaY)
+
+	} else {
+		// Se o jogador tentar plantar outra bomba, apenas exibe uma mensagem
+		jogo.StatusMsg = "Aguarde a bomba anterior explodir!"
+	}
 }
 
 // Processa o evento do teclado e executa a ação correspondente
