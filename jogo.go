@@ -5,10 +5,10 @@ import (
 	"bufio"
 	"os"
 	"time"
-	"sync"
 )
 
-var mu sync.Mutex
+// Canal para exclusão mútua - funciona como semáforo binário
+var mutexChan = make(chan struct{}, 1)
 
 // Elemento representa qualquer objeto do mapa (parede, personagem, vegetação, etc)
 type Elemento struct {
@@ -30,6 +30,10 @@ type Jogo struct {
 	Direcao        rune         // direção atual do personagem (w, a, s, d)
 	StatusMsg      string       // mensagem para a barra de status
 	Entidades      []Entidade   // posicoes dos inimigos e jogador ([0] é o jogador)
+	LogsInimigos   []string     // logs de comportamento dos inimigos (aleatório/perseguindo)
+	Vida           int          // vida atual do jogador (máximo 3 corações)
+	UltimoDano     time.Time    // timestamp do último dano recebido
+	CuraUsada      bool         // indica se a cura já foi utilizada (uso único)
 }
 
 // Elementos visuais do jogo
@@ -40,7 +44,7 @@ var (
 	Vegetacao  = Elemento{'♣', CorVerde, CorPadrao, false}
 	Vazio      = Elemento{' ', CorPadrao, CorPadrao, false}
 	Cura       = Elemento{'+', CorVerde, CorPadrao, false}
-	Direcao    = Elemento{'•', CorCinzaEscuro, CorPadrao, false} 
+	Direcao    = Elemento{'•', CorCinzaEscuro, CorPadrao, false}
 )
 
 // Cria e retorna uma nova instância do jogo
@@ -48,8 +52,13 @@ func jogoNovo() Jogo {
 	// O ultimo elemento visitado é inicializado como vazio
 	// pois o jogo começa com o personagem em uma posição vazia
 	return Jogo{
-		Direcao:   'd',
-		Entidades: []Entidade{},
+		Mapa:         make([][]Elemento, 0),
+		Direcao:      'w',
+		StatusMsg:    "Jogo iniciado",
+		Entidades:    make([]Entidade, 0),
+		LogsInimigos: make([]string, 0),
+		Vida:         3, // jogador começa com 3 corações
+
 	}
 }
 
@@ -64,12 +73,22 @@ func piscarcor(jogo *Jogo) {
 		}
 		pisca = !pisca
 
+		// Adquire o lock para modificar o mapa
+		mutexChan <- struct{}{}
+		curaEncontrada := false
 		for y := range jogo.Mapa {
 			for x := range jogo.Mapa[y] {
 				if jogo.Mapa[y][x].simbolo == Cura.simbolo {
 					jogo.Mapa[y][x].cor = novaCor
+					curaEncontrada = true
 				}
 			}
+		}
+		<-mutexChan // Libera o lock
+
+		// Se não há mais curas no mapa, para de piscar
+		if !curaEncontrada {
+			return
 		}
 
 		interfaceDesenharJogo(jogo)
@@ -121,7 +140,7 @@ func jogoCarregarMapa(nome string, jogo *Jogo) error {
 	return nil
 }
 
-// Verifica se o personagem pode se mover para a posição (x, y)
+// Verifica se uma entidade pode se mover para a posição (x, y)
 func jogoPodeMoverPara(jogo *Jogo, x, y int) bool {
 	// Verifica se a coordenada Y está dentro dos limites verticais do mapa
 	if y < 0 || y >= len(jogo.Mapa) {
@@ -138,21 +157,49 @@ func jogoPodeMoverPara(jogo *Jogo, x, y int) bool {
 		return false
 	}
 
-	// Verifica se já existe alguma entidade nessa posição
-	for _, ent := range jogo.Entidades {
-		if ent.X == x && ent.Y == y {
-			return false
+	// Pode mover para a posição (permitindo sobreposição para dano)
+	return true
+}
+
+// Verifica se uma entidade pode se mover para a posição, excluindo o personagem
+func jogoPodeMoverParaInimigo(jogo *Jogo, x, y int, inimigoIdx int) bool {
+	// Verifica limites e tangibilidade
+	if !jogoPodeMoverPara(jogo, x, y) {
+		return false
+	}
+
+	// Verifica se já existe outro inimigo nessa posição (mas permite posição do personagem)
+	for i, ent := range jogo.Entidades {
+		if i != 0 && i != inimigoIdx && ent.X == x && ent.Y == y {
+			return false // Bloqueia movimento para posição de outro inimigo
 		}
 	}
 
-	// Pode mover para a posição
+	return true // Permite movimento para posição do personagem ou vazia
+}
+
+// Verifica se o personagem pode se mover para a posição (bloqueia movimento para inimigos)
+func jogoPodeMoverParaPersonagem(jogo *Jogo, x, y int) bool {
+	// Verifica limites e tangibilidade
+	if !jogoPodeMoverPara(jogo, x, y) {
+		return false
+	}
+
+	// Verifica se já existe algum inimigo nessa posição
+	for i, ent := range jogo.Entidades {
+		if i != 0 && ent.X == x && ent.Y == y {
+			return false // Bloqueia movimento para posição de inimigo
+		}
+	}
+
 	return true
 }
 
 // Move um elemento para a nova posição
 func jogoMoverElemento(jogo *Jogo, x, y, dx, dy int, ent *Entidade) {
-	mu.Lock()
-	defer mu.Unlock()
+	// Adquire o lock usando canal (semáforo binário)
+	mutexChan <- struct{}{}
+	defer func() { <-mutexChan }() // Libera o lock
 
 	// Calcula nova posição
 	nx, ny := x+dx, y+dy

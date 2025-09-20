@@ -23,6 +23,12 @@ func main() {
 		panic(err)
 	}
 
+	// Inicializa logs para cada inimigo (exceto o personagem que é índice 0)
+	jogo.LogsInimigos = make([]string, len(jogo.Entidades)-1)
+	for i := range jogo.LogsInimigos {
+		jogo.LogsInimigos[i] = "Aguardando..."
+	}
+
 	canais := make([]chan [2]int, len(jogo.Entidades)-1) // Canais para inimigos detectarem o personagem
 	for i := range canais {
 		canais[i] = make(chan [2]int, 1)
@@ -52,6 +58,8 @@ func main() {
 	interfaceDesenharJogo(&jogo)
 
 	go piscarcor(&jogo)
+
+
 
 	// Loop principal de entrada
 	for {
