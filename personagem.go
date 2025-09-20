@@ -2,98 +2,92 @@
 package main
 
 import (
-	"time"
-	"fmt"
+    //"fmt"
+    "time"
 )
 
-// Atualiza a posição do personagem com base na tecla pressionada (WASD)
+// ATUALIZADO: Atualiza a posição do personagem e sua direção.
 func personagemMover(tecla rune, jogo *Jogo) {
-	dx, dy := 0, 0
-	switch tecla {
-	case 'w': dy = -1 // Move para cima
-	case 'a': dx = -1 // Move para a esquerda
-	case 's': dy = 1  // Move para baixo
-	case 'd': dx = 1  // Move para a direita
-	}
+    dx, dy := 0, 0
+    switch tecla {
+    case 'w':
+        dy = -1
+        jogo.Direcao = 'w' // Atualiza a direção do personagem
+    case 'a':
+        dx = -1
+        jogo.Direcao = 'a' // Atualiza a direção do personagem
+    case 's':
+        dy = 1
+        jogo.Direcao = 's' // Atualiza a direção do personagem
+    case 'd':
+        dx = 1
+        jogo.Direcao = 'd' // Atualiza a direção do personagem
+    }
 
-	nx, ny := jogo.PosX+dx, jogo.PosY+dy
-	// Verifica se o movimento é permitido e realiza a movimentação
-	if jogoPodeMoverPara(jogo, nx, ny) {
-		jogoMoverElemento(jogo, jogo.PosX, jogo.PosY, dx, dy)
-		jogo.PosX, jogo.PosY = nx, ny
-	}
+    nx, ny := jogo.PosX+dx, jogo.PosY+dy
+    // Apenas verifica se pode mover e atualiza as coordenadas do personagem.
+    // **NÃO** chama mais jogoMoverElemento, para não apagar o que está no mapa.
+    if jogoPodeMoverPara(jogo, nx, ny) {
+        jogo.PosX, jogo.PosY = nx, ny
+    }
 }
 
-// Função para atirar
-func atirar(jogo *Jogo, x, y int){
-	dx, dy := 0, 0
-	switch jogo.Direcao {
-	case 'w': dy = -1 // atira para cima
-	case 'a': dx = -1 // atira para a esquerda
-	case 's': dy = 1  // atira para baixo
-	case 'd': dx = 1  // atira para a direita
-	}
+// Função para atirar (sem alterações)
+func atirar(jogo *Jogo, x, y int) {
+    dx, dy := 0, 0
+    switch jogo.Direcao {
+    case 'w':
+        dy = -1
+    case 'a':
+        dx = -1
+    case 's':
+        dy = 1
+    case 'd':
+        dx = 1
+    }
 
-	for i := 1; i <= 30; i++ {
-		tiroX, tiroY := x+(dx*i), y+(dy*i)
-		
-		// Verifica se o tiro saiu dos limites do mapa
-		if tiroY < 0 || tiroY >= len(jogo.Mapa) || tiroX < 0 || tiroX >= len(jogo.Mapa[tiroY]) {
-			break
-		}
-		
-		// Verifica se atingiu uma parede
-		if jogo.Mapa[tiroY][tiroX].tangivel {
-			break
-		}
-
-		// Desenha o tiro
-		jogo.Mapa[tiroY][tiroX] = Vegetacao
-		interfaceDesenharJogo(jogo)
-		time.Sleep(100 * time.Millisecond)
-		
-		// Apaga o tiro (restaura o elemento original)
-		jogo.Mapa[tiroY][tiroX] = Vazio
-	}
+    for i := 1; i <= 30; i++ {
+        tiroX, tiroY := x+(dx*i), y+(dy*i)
+        if tiroY < 0 || tiroY >= len(jogo.Mapa) || tiroX < 0 || tiroX >= len(jogo.Mapa[tiroY]) {
+            break
+        }
+        if jogo.Mapa[tiroY][tiroX].tangivel {
+            break
+        }
+        jogo.Mapa[tiroY][tiroX] = Vegetacao
+        interfaceDesenharJogo(jogo)
+        time.Sleep(100 * time.Millisecond)
+        jogo.Mapa[tiroY][tiroX] = Vazio
+    }
 }
 
-// Define o que ocorre quando o jogador pressiona a tecla de interação
-// Neste exemplo, apenas exibe uma mensagem de status
-// Você pode expandir essa função para incluir lógica de interação com objetos
+// ATUALIZADO: A função de interação agora planta a bomba. A mensagem de status foi removida para não ser sobreposta.
 func personagemInteragir(jogo *Jogo) {
-	// Atualmente apenas exibe uma mensagem de status
-	jogo.StatusMsg = fmt.Sprintf("Interagindo em (%d, %d)", jogo.PosX, jogo.PosY)
-	if !jogo.BombaAtiva {
-		// 1. Se não houver bomba ativa, planta uma nova
-		jogo.BombaAtiva = true
-		bombaX, bombaY := jogo.PosX, jogo.PosY
+    if !jogo.BombaAtiva {
+        jogo.BombaAtiva = true
+        bombaX, bombaY := jogo.PosX, jogo.PosY
 
-		// 2. Envia uma solicitação para colocar a bomba no mapa
-		// Esta é a comunicação do personagem com o gerenciador de estado. 
-		jogo.AcessoMapa <- AtualizacaoMapa{X: bombaX, Y: bombaY, Elem: Bomba}
-		jogo.StatusMsg = "Bomba plantada! Corra!"
+        // Envia uma solicitação para colocar a bomba no mapa
+        jogo.AcessoMapa <- AtualizacaoMapa{X: bombaX, Y: bombaY, Elem: Bomba}
+        jogo.StatusMsg = "Bomba plantada! Corra!"
 
-		// 3. Inicia a goroutine da bomba, que cuidará da explosão
-		go gerenciarBomba(jogo, bombaX, bombaY)
+        // Inicia a goroutine da bomba, que cuidará da explosão
+        go gerenciarBomba(jogo, bombaX, bombaY)
 
-	} else {
-		// Se o jogador tentar plantar outra bomba, apenas exibe uma mensagem
-		jogo.StatusMsg = "Aguarde a bomba anterior explodir!"
-	}
+    } else {
+        jogo.StatusMsg = "Aguarde a bomba anterior explodir!"
+    }
 }
 
-// Processa o evento do teclado e executa a ação correspondente
+// Processa o evento do teclado e executa a ação correspondente (sem alterações)
 func personagemExecutarAcao(ev EventoTeclado, jogo *Jogo) bool {
-	switch ev.Tipo {
-	case "sair":
-		// Retorna false para indicar que o jogo deve terminar
-		return false
-	case "interagir":
-		// Executa a ação de interação
-		personagemInteragir(jogo)
-	case "mover":
-		// Move o personagem com base na tecla
-		personagemMover(ev.Tecla, jogo)
-	}
-	return true // Continua o jogo
+    switch ev.Tipo {
+    case "sair":
+        return false
+    case "interagir":
+        personagemInteragir(jogo)
+    case "mover":
+        personagemMover(ev.Tecla, jogo)
+    }
+    return true
 }
