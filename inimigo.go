@@ -1,53 +1,21 @@
-// inimigo.go - Funções para movimentação e ações dos inimigos
+// inimigo.go - Sistema de comportamento e ações dos inimigos
 package main
+
+// ============================================================================
+// IMPORTS E DEPENDÊNCIAS
+// ============================================================================
 
 import (
 	"fmt"
 	"math/rand/v2"
+	"time"
 )
 
-// Atualiza a posição do inimigo aleatoriamente
-func inimigoMover(jogo *Jogo, idx int) {
-	dx, dy := 0, 0
-	d := rand.IntN(4)
-	switch d {
-	case 0:
-		dy = -1
-	case 1:
-		dx = -1
-	case 2:
-		dy = 1
-	case 3:
-		dx = 1
-	}
-	nx, ny := jogo.Entidades[idx].X+dx, jogo.Entidades[idx].Y+dy
-	if jogoPodeMoverPara(jogo, nx, ny) {
-		jogoMoverElemento(jogo, jogo.Entidades[idx].X, jogo.Entidades[idx].Y, dx, dy, &jogo.Entidades[idx])
-	}
-}
+// ============================================================================
+// MÓDULO DE DETECÇÃO E DISTÂNCIA
+// ============================================================================
 
-func inimigoPerseguir(jogo *Jogo, idx, px, py int) {
-	dx, dy := 0, 0
-	if px > jogo.Entidades[idx].X {
-		dx = 1
-	} else if px < jogo.Entidades[idx].X {
-		dx = -1
-	}
-	if py > jogo.Entidades[idx].Y {
-		dy = 1
-	} else if py < jogo.Entidades[idx].Y {
-		dy = -1
-	}
-	nx, ny := jogo.Entidades[idx].X+dx, jogo.Entidades[idx].Y+dy
-	if jogoPodeMoverPara(jogo, nx, ny) {
-		jogoMoverElemento(jogo, jogo.Entidades[idx].X, jogo.Entidades[idx].Y, dx, dy, &jogo.Entidades[idx])
-	}
-}
-
-// inimigo detecta personagem, ou scanear em volta do personagem e se tiver um inimigo próximo, mandar ele perseguir?
-// o personagem detecta inimigos e manda mensagem para eles quando está próximo
-// inimigo detectar garante que o inimigo pode correr independentemente atrás do player
-// inimigo manda pro player que achou está perto e eles trocam posições até o player estar longe demais
+// Calcula distância Manhattan entre inimigo e personagem
 func inimigoDetectaPersonagem(x1, y1, x2, y2 int) int {
 	dx := x1 - x2
 	if dx < 0 {
@@ -57,26 +25,125 @@ func inimigoDetectaPersonagem(x1, y1, x2, y2 int) int {
 	if dy < 0 {
 		dy = -dy
 	}
-
+	
 	return dx + dy
 }
 
-// Processa o evento do teclado e executa a ação correspondente
+// ============================================================================
+// MÓDULO DE MOVIMENTAÇÃO E COMPORTAMENTO
+// ============================================================================
+
+// Move inimigo aleatoriamente em uma das 4 direções
+func inimigoMover(jogo *Jogo, idx int) {
+	dx, dy := 0, 0
+	
+	// Escolhe direção aleatória (0=cima, 1=esquerda, 2=baixo, 3=direita)
+	d := rand.IntN(4)
+	switch d {
+	case 0: dy = -1 // Cima
+	case 1: dx = -1 // Esquerda
+	case 2: dy = 1  // Baixo
+	case 3: dx = 1  // Direita
+	}
+	
+	// Calcula nova posição e move se válida
+	nx, ny := jogo.Entidades[idx].X+dx, jogo.Entidades[idx].Y+dy
+	if jogoPodeMoverParaInimigo(jogo, nx, ny, idx) {
+		jogoMoverElemento(jogo, jogo.Entidades[idx].X, jogo.Entidades[idx].Y, dx, dy, &jogo.Entidades[idx])
+	}
+}
+
+// Move inimigo em direção ao personagem (perseguição)
+func inimigoPerseguir(jogo *Jogo, idx, px, py int) {
+	dx, dy := 0, 0
+	
+	// Calcula direção horizontal
+	if px > jogo.Entidades[idx].X {
+		dx = 1
+	} else if px < jogo.Entidades[idx].X {
+		dx = -1
+	}
+	
+	// Calcula direção vertical
+	if py > jogo.Entidades[idx].Y {
+		dy = 1
+	} else if py < jogo.Entidades[idx].Y {
+		dy = -1
+	}
+	
+	// Move em direção ao personagem se possível
+	nx, ny := jogo.Entidades[idx].X+dx, jogo.Entidades[idx].Y+dy
+	if jogoPodeMoverParaInimigo(jogo, nx, ny, idx) {
+		jogoMoverElemento(jogo, jogo.Entidades[idx].X, jogo.Entidades[idx].Y, dx, dy, &jogo.Entidades[idx])
+	}
+}
+
+// ============================================================================
+// MÓDULO DE SISTEMA DE DANO
+// ============================================================================
+
+// Aplica dano ao jogador quando inimigo toca nele
+func inimigoAplicarDano(jogo *Jogo, inimigoIdx int) {
+	// Verifica se inimigo está na mesma posição do personagem
+	if jogo.Entidades[inimigoIdx].X == jogo.Entidades[0].X && 
+	   jogo.Entidades[inimigoIdx].Y == jogo.Entidades[0].Y {
+		
+		// Protege modificação da vida
+		mutexChan <- struct{}{}
+		
+		// Cooldown de 2 segundos entre danos
+		agora := time.Now()
+		tempoDecorrido := agora.Sub(jogo.UltimoDano)
+		
+		// Aplica dano se cooldown passou e jogador tem vida
+		if tempoDecorrido >= 2*time.Second && jogo.Vida > 0 {
+			jogo.Vida--
+			jogo.UltimoDano = agora
+		}
+		
+		<-mutexChan
+	}
+}
+
+// ============================================================================
+// MÓDULO DE PROCESSAMENTO DE AÇÕES
+// ============================================================================
+
+// Processa comportamento do inimigo baseado na posição do personagem
 func inimigoExecutarAcao(jogo *Jogo, idx int, posPersonagem <-chan [2]int) bool {
+	logIdx := idx - 1 // Ajusta índice para o array de logs (inimigos começam no índice 1)
+	
 	select {
 	case pos := <-posPersonagem:
+		// Calcula distância até o personagem
 		dist := inimigoDetectaPersonagem(jogo.Entidades[idx].X, jogo.Entidades[idx].Y, pos[0], pos[1])
 
 		if dist <= 10 {
+			// Persegue se personagem estiver próximo
 			inimigoPerseguir(jogo, idx, pos[0], pos[1])
-			jogo.StatusMsg = fmt.Sprintf("Distância do personagem: %d", dist)
+			inimigoAplicarDano(jogo, idx)
+			
+			// Atualiza log de comportamento
+			if logIdx >= 0 && logIdx < len(jogo.LogsInimigos) {
+				jogo.LogsInimigos[logIdx] = fmt.Sprintf("Perseguindo (dist: %d)", dist)
+			}
 			return true
 		} else {
+			// Movimento aleatório se personagem estiver longe
 			inimigoMover(jogo, idx)
+			inimigoAplicarDano(jogo, idx)
+			
+			// Atualiza log de comportamento
+			if logIdx >= 0 && logIdx < len(jogo.LogsInimigos) {
+				jogo.LogsInimigos[logIdx] = "Random"
+			}
 		}
 	default:
+		// Movimento aleatório quando não há informação do personagem
 		inimigoMover(jogo, idx)
-		jogo.StatusMsg = "Inimigo se movendo aleatoriamente"
+		inimigoAplicarDano(jogo, idx)
+		
 	}
+	
 	return true
 }
