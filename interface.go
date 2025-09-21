@@ -68,6 +68,9 @@ func interfaceLerEventoTeclado() EventoTeclado {
 		return EventoTeclado{Tipo: "sair"}
 	}
 	
+	if ev.Ch == 'e' {
+		return EventoTeclado{Tipo: "interagir"}
+	}
 	// Para outras teclas, retorna como evento de movimento
 	return EventoTeclado{Tipo: "mover", Tecla: ev.Ch}
 }
