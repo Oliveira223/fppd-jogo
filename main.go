@@ -22,7 +22,7 @@ func gerenciadorDeEstado(jogo *Jogo, redraw chan bool) {
 }
 
 func main() {
-	// Inicializa a interface (termbox)
+	// Inicializa a interface 
 	interfaceIniciar()
 	defer interfaceFinalizar()
 
@@ -35,8 +35,6 @@ func main() {
 	if err := jogoCarregarMapa(mapaFile, &jogo); err != nil {
 		panic(err)
 	}
-
-	// --- ESTRUTURA CONCORRENTE DO LOOP PRINCIPAL ---
 
 	// Canal para eventos de teclado
 	eventoTeclado := make(chan EventoTeclado)

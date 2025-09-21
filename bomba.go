@@ -5,11 +5,9 @@ import (
 	"time"
 )
 
-// gerenciarBomba é a função que roda como uma goroutine para a bomba.
-// Ela é um "elemento autônomo concorrente". 
+// gerenciarBomba é a função que roda como uma goroutine para a bomba. 
 func gerenciarBomba(jogo *Jogo, x, y int) {
-	// A bomba agora só precisa esperar pelo canal do temporizador.
-	// Este é um exemplo de comunicação com timeout. 
+	// A bomba só precisa esperar pelo canal do temporizador.
 	<-time.After(3 * time.Second) // A bomba explode após 3 segundos
 
 	jogo.StatusMsg = "A bomba explodiu!"
@@ -36,10 +34,9 @@ func gerenciarBomba(jogo *Jogo, x, y int) {
 		for j := -raio; j <= raio; j++ {
 			nx, ny := x+i, y+j
 			if ny >= 0 && ny < len(jogo.Mapa) && nx >= 0 && nx < len(jogo.Mapa[ny]) {
-				// Só limpa o que não for parede
-				if jogo.Mapa[ny][nx] != Parede {
-				    jogo.AcessoMapa <- AtualizacaoMapa{X: nx, Y: ny, Elem: Vazio}
-                }
+				
+				jogo.AcessoMapa <- AtualizacaoMapa{X: nx, Y: ny, Elem: Vazio}
+                
 			}
 		}
 	}

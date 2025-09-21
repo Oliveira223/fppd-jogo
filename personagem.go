@@ -6,33 +6,32 @@ import (
     "time"
 )
 
-// ATUALIZADO: Atualiza a posição do personagem e sua direção.
+// Atualiza a posição do personagem e sua direção.
 func personagemMover(tecla rune, jogo *Jogo) {
     dx, dy := 0, 0
     switch tecla {
     case 'w':
         dy = -1
-        jogo.Direcao = 'w' // Atualiza a direção do personagem
+        jogo.Direcao = 'w' 
     case 'a':
         dx = -1
-        jogo.Direcao = 'a' // Atualiza a direção do personagem
+        jogo.Direcao = 'a' 
     case 's':
         dy = 1
-        jogo.Direcao = 's' // Atualiza a direção do personagem
+        jogo.Direcao = 's' 
     case 'd':
         dx = 1
-        jogo.Direcao = 'd' // Atualiza a direção do personagem
+        jogo.Direcao = 'd' 
     }
 
     nx, ny := jogo.PosX+dx, jogo.PosY+dy
-    // Apenas verifica se pode mover e atualiza as coordenadas do personagem.
-    // **NÃO** chama mais jogoMoverElemento, para não apagar o que está no mapa.
+    // verifica se pode mover e atualiza as coordenadas do personagem.
     if jogoPodeMoverPara(jogo, nx, ny) {
         jogo.PosX, jogo.PosY = nx, ny
     }
 }
 
-// Função para atirar (sem alterações)
+// Função para atirar
 func atirar(jogo *Jogo, x, y int) {
     dx, dy := 0, 0
     switch jogo.Direcao {
@@ -61,7 +60,7 @@ func atirar(jogo *Jogo, x, y int) {
     }
 }
 
-// ATUALIZADO: A função de interação agora planta a bomba. A mensagem de status foi removida para não ser sobreposta.
+// A função de interação planta a bomba. A mensagem de status foi removida para não ser sobreposta.
 func personagemInteragir(jogo *Jogo) {
     if !jogo.BombaAtiva {
         jogo.BombaAtiva = true
@@ -79,7 +78,7 @@ func personagemInteragir(jogo *Jogo) {
     }
 }
 
-// Processa o evento do teclado e executa a ação correspondente (sem alterações)
+// Processa o evento do teclado e executa a ação correspondente
 func personagemExecutarAcao(ev EventoTeclado, jogo *Jogo) bool {
     switch ev.Tipo {
     case "sair":

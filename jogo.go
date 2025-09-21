@@ -48,7 +48,7 @@ func jogoNovo() Jogo {
     }
 }
 
-// ATUALIZADO: Garante que a célula inicial do personagem no mapa seja vazia.
+// Garante que a célula inicial do personagem no mapa seja vazia.
 func jogoCarregarMapa(nome string, jogo *Jogo) error {
     arq, err := os.Open(nome)
     if err != nil {
@@ -72,7 +72,7 @@ func jogoCarregarMapa(nome string, jogo *Jogo) error {
                 e = Vegetacao
             case Personagem.simbolo:
                 jogo.PosX, jogo.PosY = x, y
-                // **ADIÇÃO IMPORTANTE**: Garante que o chão sob o personagem seja 'Vazio'.
+                // Garante que o chão sob o personagem seja 'Vazio'.
                 // O personagem agora é uma entidade separada do mapa de dados.
                 e = Vazio
             }
@@ -87,7 +87,7 @@ func jogoCarregarMapa(nome string, jogo *Jogo) error {
     return nil
 }
 
-// Verifica se o personagem pode se mover para a posição (x, y) (sem alterações)
+// Verifica se o personagem pode se mover para a posição (x, y) 
 func jogoPodeMoverPara(jogo *Jogo, x, y int) bool {
     if y < 0 || y >= len(jogo.Mapa) {
         return false
@@ -101,14 +101,3 @@ func jogoPodeMoverPara(jogo *Jogo, x, y int) bool {
     return true
 }
 
-// REMOVIDO: A função jogoMoverElemento não é mais necessária com a nova lógica.
-// Você pode apagar a função inteira ou apenas deixá-la sem uso.
-/*
-func jogoMoverElemento(jogo *Jogo, x, y, dx, dy int) {
-    nx, ny := x+dx, y+dy
-    elemento := jogo.Mapa[y][x]
-    jogo.Mapa[y][x] = jogo.UltimoVisitado
-    jogo.UltimoVisitado = jogo.Mapa[ny][nx]
-    jogo.Mapa[ny][nx] = elemento
-}
-*/
