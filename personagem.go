@@ -1,61 +1,76 @@
-// personagem.go - Funções para movimentação e ações do personagem
+// personagem.go - Sistema de controle e ações do personagem
 package main
 
-import (
-	"time"
-)
+// ============================================================================
+// MÓDULO DE MOVIMENTAÇÃO E POSICIONAMENTO
+// ============================================================================
 
-// Atualiza a posição do personagem com base na tecla pressionada (WASD)
+// Move o personagem baseado na tecla WASD pressionada
 func personagemMover(tecla rune, jogo *Jogo) {
 	dx, dy := 0, 0
+	
+	// Define direção baseada na tecla
 	switch tecla {
-	case 'w':
-		dy = -1 // Move para cima
-	case 'a':
-		dx = -1 // Move para a esquerda
-	case 's':
-		dy = 1 // Move para baixo
-	case 'd':
-		dx = 1 // Move para a direita
+	case 'w': dy = -1 // Cima
+	case 'a': dx = -1 // Esquerda
+	case 's': dy = 1  // Baixo
+	case 'd': dx = 1  // Direita
 	}
 
+	// Atualiza direção atual do personagem
+	jogo.Direcao = tecla
+
+	// Calcula nova posição
 	nx, ny := jogo.Entidades[0].X+dx, jogo.Entidades[0].Y+dy
-	// Verifica se o movimento é permitido e realiza a movimentação
-	if jogoPodeMoverPara(jogo, nx, ny) {
+	
+	// Verifica se movimento é válido e executa
+	if jogoPodeMoverParaPersonagem(jogo, nx, ny) {
+		// Verifica se há cura na posição de destino
+		if jogo.Mapa[ny][nx].simbolo == Cura.simbolo {
+			coletarCura(jogo, nx, ny)
+		}
 		jogoMoverElemento(jogo, jogo.Entidades[0].X, jogo.Entidades[0].Y, dx, dy, &jogo.Entidades[0])
 	}
 }
 
-func atirar(jogo *Jogo, x, y int) {
-	for i := 0; i < 30; i++ {
+// ============================================================================
+// MÓDULO DE SISTEMA DE CURA
+// ============================================================================
 
-		jogo.Mapa[y][x+i] = Vegetacao
-		interfaceDesenharJogo(jogo)
-		time.Sleep(50 * time.Millisecond)
-	}
+// Coleta uma cura na posição especificada
+func coletarCura(jogo *Jogo, x, y int) {
+	// Remove cura do mapa
+	jogo.Mapa[y][x] = Vazio
+	
+	// Marca cura como usada
+	jogo.CuraUsada = true
+	
+	// Aplica cura se vida não estiver no máximo
+	if jogo.Vida < 5 {
+		jogo.Vida++
+	} 
 }
 
-// Define o que ocorre quando o jogador pressiona a tecla de interação
-// Neste exemplo, apenas exibe uma mensagem de status
-// Você pode expandir essa função para incluir lógica de interação com objetos
-func personagemInteragir(jogo *Jogo) {
-	// Atualmente apenas exibe uma mensagem de status
-	go atirar(jogo, jogo.Entidades[0].X, jogo.Entidades[0].Y)
-	//jogo.StatusMsg = fmt.Sprintf("Interagindo em (%d, %d)", jogo.PosX, jogo.PosY)
-}
+// ============================================================================
+// MÓDULO DE PROCESSAMENTO DE EVENTOS
+// ============================================================================
 
-// Processa o evento do teclado e executa a ação correspondente
+// Processa eventos de teclado e executa ações do personagem
 func personagemExecutarAcao(ev EventoTeclado, jogo *Jogo) bool {
 	switch ev.Tipo {
 	case "sair":
-		// Retorna false para indicar que o jogo deve terminar
+		// Termina o jogo
 		return false
-	case "interagir":
-		// Executa a ação de interação
-		personagemInteragir(jogo)
+
 	case "mover":
-		// Move o personagem com base na tecla
+		// Executa movimento do personagem
 		personagemMover(ev.Tecla, jogo)
+		
+	case "bomba":
+		// Coloca uma bomba na posição atual
+		jogoColocarBomba(jogo)
 	}
-	return true // Continua o jogo
+	
+	// Continua o jogo
+	return true
 }

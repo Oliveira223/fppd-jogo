@@ -23,13 +23,18 @@ func main() {
 		panic(err)
 	}
 
+	// Inicializa logs para cada inimigo (exceto o personagem que é índice 0)
+	jogo.LogsInimigos = make([]string, len(jogo.Entidades)-1)
+	for i := range jogo.LogsInimigos {
+		jogo.LogsInimigos[i] = "Aguardando..."
+	}
+
 	canais := make([]chan [2]int, len(jogo.Entidades)-1) // Canais para inimigos detectarem o personagem
 	for i := range canais {
 		canais[i] = make(chan [2]int, 1)
 		go func(idx int, ch <-chan [2]int) { //Goroutine para cada inimigo agir independentemente
 			for {
 				inimigoExecutarAcao(&jogo, idx+1, ch)
-				interfaceDesenharJogo(&jogo)
 				time.Sleep(500 * time.Millisecond) //Velocidade do inimigo
 			}
 		}(i, canais[i])
@@ -52,12 +57,21 @@ func main() {
 	// Desenha o estado inicial do jogo
 	interfaceDesenharJogo(&jogo)
 
+	go piscarcor(&jogo)
+
+
+
 	// Loop principal de entrada
 	for {
 		evento := interfaceLerEventoTeclado()
 		if continuar := personagemExecutarAcao(evento, &jogo); !continuar {
 			break
 		}
+		
+		// Atualiza bombas e explosões
+		jogoAtualizarBombas(&jogo)
+		jogoAtualizarExplosoes(&jogo)
+		
 		interfaceDesenharJogo(&jogo)
 	}
 }
