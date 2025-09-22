@@ -13,7 +13,7 @@ type Cor = termbox.Attribute
 
 // Representa uma ação detectada do teclado
 type EventoTeclado struct {
-	Tipo  string // Tipos: "sair", "mover"
+	Tipo  string // Tipos: "sair", "mover", "bomba"
 	Tecla rune   // Tecla pressionada (usado para movimento)
 }
 
@@ -68,9 +68,17 @@ func interfaceLerEventoTeclado() EventoTeclado {
 		return EventoTeclado{Tipo: "sair"}
 	}
 	
+<<<<<<< HEAD
 	if ev.Ch == 'e' {
 		return EventoTeclado{Tipo: "interagir"}
 	}
+=======
+	// Detecta tecla E para colocar bomba
+	if ev.Ch == 'e' || ev.Ch == 'E' {
+		return EventoTeclado{Tipo: "bomba", Tecla: ev.Ch}
+	}
+	
+>>>>>>> Pedro
 	// Para outras teclas, retorna como evento de movimento
 	return EventoTeclado{Tipo: "mover", Tecla: ev.Ch}
 }
@@ -85,15 +93,26 @@ func interfaceDesenharJogo(jogo *Jogo) {
 	// Limpa a tela antes de desenhar
 	interfaceLimparTela()
 	
-	// Renderiza o mapa base
-	interfaceRenderizarMapa(jogo)
-	
-	// Renderiza as entidades (jogador e inimigos)
-	interfaceRenderizarEntidades(jogo)
-	
-	// Renderiza elementos de interface
-	interfaceDesenharIndicadorDirecao(jogo)
-	interfaceDesenharBarraDeStatus(jogo)
+	// Se o jogo terminou, mostra apenas a tela de fim de jogo
+	if jogo.JogoTerminado {
+		interfaceDesenharTelaFimJogo(jogo)
+	} else {
+		// Renderiza o mapa base
+		interfaceRenderizarMapa(jogo)
+		
+		// Renderiza bombas (antes das entidades para que fiquem atrás)
+		interfaceRenderizarBombas(jogo)
+		
+		// Renderiza as entidades (jogador e inimigos)
+		interfaceRenderizarEntidades(jogo)
+		
+		// Renderiza explosões (por cima de tudo)
+		interfaceRenderizarExplosoes(jogo)
+		
+		// Renderiza elementos de interface
+		interfaceDesenharIndicadorDirecao(jogo)
+		interfaceDesenharBarraDeStatus(jogo)
+	}
 	
 	// Atualiza a tela com todas as mudanças
 	interfaceAtualizarTela()
@@ -113,6 +132,24 @@ func interfaceRenderizarEntidades(jogo *Jogo) {
 	for i := 0; i < len(jogo.Entidades); i++ {
 		entidade := &jogo.Entidades[i]
 		interfaceDesenharElemento(entidade.X, entidade.Y, entidade.Sprite)
+	}
+}
+
+// Desenha todas as bombas ativas
+func interfaceRenderizarBombas(jogo *Jogo) {
+	for _, bomba := range jogo.Bombas {
+		if bomba.Ativa {
+			interfaceDesenharElemento(bomba.X, bomba.Y, BombaElem)
+		}
+	}
+}
+
+// Desenha todas as explosões ativas
+func interfaceRenderizarExplosoes(jogo *Jogo) {
+	for _, explosao := range jogo.Explosoes {
+		if explosao.Ativa {
+			interfaceDesenharElemento(explosao.X, explosao.Y, ExplosaoElem)
+		}
 	}
 }
 
@@ -191,6 +228,12 @@ func interfaceDesenharBarraDeStatus(jogo *Jogo) {
 	// Desenha instruções de controle
 	linhaInstrucoes := linhaVida + 2
 	interfaceDesenharInstrucoes(linhaInstrucoes)
+	
+	// Desenha mensagem de fim de jogo se o jogo terminou
+	if jogo.JogoTerminado {
+		linhaFimJogo := linhaInstrucoes + 1
+		interfaceDesenharMensagemFimJogo(jogo, linhaFimJogo)
+	}
 }
 
 // Exibe os logs de atividade dos inimigos
@@ -221,8 +264,46 @@ func interfaceDesenharBarraVida(jogo *Jogo, linha int) {
 
 // Exibe as instruções de controle do jogo
 func interfaceDesenharInstrucoes(linha int) {
-	instrucoes := "Use WASD para mover. ESC para sair."
+	instrucoes := "Use WASD para mover. E para bomba. ESC para sair."
 	interfaceDesenharTexto(0, linha, instrucoes, CorTexto)
+}
+
+// Exibe a mensagem de fim de jogo (vitória ou derrota)
+func interfaceDesenharMensagemFimJogo(jogo *Jogo, linha int) {
+	// Determina a cor baseada no tipo de mensagem
+	var cor Cor
+	if jogo.StatusMsg == "VITORIA! Todos os inimigos foram eliminados!" {
+		cor = CorVerde
+	} else {
+		cor = CorVermelho
+	}
+	
+	// Desenha a mensagem de status
+	interfaceDesenharTexto(0, linha, jogo.StatusMsg, cor)
+}
+
+// Desenha uma tela de fim de jogo que substitui o mapa
+func interfaceDesenharTelaFimJogo(jogo *Jogo) {
+	// Determina a cor baseada no tipo de mensagem
+	var cor Cor
+	if jogo.StatusMsg == "VITORIA! Todos os inimigos foram eliminados!" {
+		cor = CorVerde
+	} else {
+		cor = CorVermelho
+	}
+	
+	// Centraliza a mensagem na tela
+	largura, altura := termbox.Size()
+	linhaMsg := altura / 2
+	colunaMsg := (largura - len(jogo.StatusMsg)) / 2
+	
+	// Desenha a mensagem principal centralizada
+	interfaceDesenharTexto(colunaMsg, linhaMsg, jogo.StatusMsg, cor)
+	
+	// Desenha instruções para sair
+	instrucaoSair := "Pressione ESC para sair"
+	colunaSair := (largura - len(instrucaoSair)) / 2
+	interfaceDesenharTexto(colunaSair, linhaMsg+2, instrucaoSair, CorTexto)
 }
 
 // Função auxiliar para desenhar texto na tela
@@ -230,5 +311,45 @@ func interfaceDesenharTexto(x, y int, texto string, cor Cor) {
 	for i, c := range texto {
 		termbox.SetCell(x+i, y, c, cor, CorPadrao)
 	}
+}
+
+// ============================================================================
+// MÓDULO DE TELA DE FIM DE JOGO
+// ============================================================================
+
+// Mostra a tela de fim de jogo com mensagem de vitória ou derrota
+func interfaceMostrarFimDeJogo(vitoria bool) {
+	// Limpa a tela
+	interfaceLimparTela()
+	
+	// Define a mensagem baseada no resultado
+	var mensagem string
+	var cor Cor
+	if vitoria {
+		mensagem = "VITORIA"
+		cor = CorVerde
+	} else {
+		mensagem = "DERROTA"
+		cor = CorVermelho
+	}
+	
+	// Calcula posição central da tela
+	largura, altura := termbox.Size()
+	x := (largura - len(mensagem)) / 2
+	y := altura / 2
+	
+	// Desenha a mensagem centralizada
+	interfaceDesenharTexto(x, y, mensagem, cor)
+	
+	// Desenha instruções para sair
+	instrucao := "Pressione qualquer tecla para sair..."
+	xInstrucao := (largura - len(instrucao)) / 2
+	interfaceDesenharTexto(xInstrucao, y+2, instrucao, CorTexto)
+	
+	// Atualiza a tela
+	interfaceAtualizarTela()
+	
+	// Aguarda uma tecla ser pressionada
+	termbox.PollEvent()
 }
 
