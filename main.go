@@ -6,23 +6,6 @@ import (
 	"time"
 )
 
-//Gerenciador de Estados(Alteração!!)
-// func gerenciadorDeEstado(jogo *Jogo, redraw chan bool) {
-// 	for {
-// 		// Espera por uma solicitação de atualização vinda de qualquer goroutine
-// 		update := <-jogo.AcessoMapa
-		
-// 		// Aplica a atualização no mapa de forma segura
-// 		jogo.Mapa[update.Y][update.X] = update.Elem
-		
-// 		// Envia um sinal para o loop principal redesenhar a tela
-// 		select {
-// 		case redraw <- true:
-// 		default:
-// 		}
-// 	}
-// }
-
 func main() {
 	// Inicializa a interface (termbox)
 	interfaceIniciar()
@@ -93,11 +76,6 @@ func main() {
 			time.Sleep(500 * time.Millisecond) //Intervalo de detecção do personagem
 		}
 	}()
-
-	// redraw := make(chan bool, 1) // Buffer de 1 para não bloquear
-
-	// //Alteração!!
-	// go gerenciadorDeEstado(&jogo, redraw)
 
 	// Desenha o estado inicial do jogo
 	interfaceDesenharJogo(&jogo)

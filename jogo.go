@@ -7,15 +7,6 @@ import (
 	"time"
 )
 
-//Alteração!!
-type AtualizacaoMapa struct {
-    X, Y int
-    Elem Elemento
-}
-
-
-///////////////////////////////////////////////
-
 // Canal para exclusão mútua - funciona como semáforo binário
 var mutexChan = make(chan struct{}, 1)
 
@@ -57,14 +48,9 @@ type Jogo struct {
 	Vida           int          // vida atual do jogador (máximo 3 corações)
 	UltimoDano     time.Time    // timestamp do último dano recebido
 	CuraUsada      bool         // indica se a cura já foi utilizada (uso único)
-<<<<<<< HEAD
-	AcessoMapa     chan AtualizacaoMapa
-    BombaAtiva     bool
-=======
 	Bombas         []Bomba      // bombas ativas no jogo
 	Explosoes      []Explosao   // explosões ativas no jogo
 	JogoTerminado  bool         // indica se o jogo terminou (vitória ou derrota)
->>>>>>> Pedro
 }
 
 // Elementos visuais do jogo
@@ -76,13 +62,8 @@ var (
 	Vazio      = Elemento{' ', CorPadrao, CorPadrao, false}
 	Cura       = Elemento{'+', CorVerde, CorPadrao, false}
 	Direcao    = Elemento{'•', CorCinzaEscuro, CorPadrao, false}
-<<<<<<< HEAD
-	Bomba      = Elemento{'o', CorVermelho, CorPadrao, true}
-    Explosao   = Elemento{'*', CorVerde, CorPadrao, false}
-=======
 	BombaElem  = Elemento{'●', CorVermelho, CorPadrao, false}
 	ExplosaoElem = Elemento{'*', CorVermelho, CorPadrao, false}
->>>>>>> Pedro
 )
 
 // Cria e retorna uma nova instância do jogo
@@ -96,7 +77,7 @@ func jogoNovo() Jogo {
 		Entidades:    make([]Entidade, 0),
 		LogsInimigos: make([]string, 0),
 		Vida:         3, // jogador começa com 3 corações
-		AcessoMapa:     make(chan AtualizacaoMapa),
+
 	}
 }
 

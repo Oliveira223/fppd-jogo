@@ -4,7 +4,6 @@ package main
 // ============================================================================
 // MÓDULO DE MOVIMENTAÇÃO E POSICIONAMENTO
 // ============================================================================
-//import "time"
 
 // Move o personagem baseado na tecla WASD pressionada
 func personagemMover(tecla rune, jogo *Jogo, chanVida chan int) {
@@ -57,35 +56,12 @@ func coletarCura(jogo *Jogo, x, y int, chanVida chan int) {
 // MÓDULO DE PROCESSAMENTO DE EVENTOS
 // ============================================================================
 
-// A função de interação planta a bomba. A mensagem de status foi removida para não ser sobreposta.
-func personagemInteragir(jogo *Jogo) {
-    if !jogo.BombaAtiva {
-        jogo.BombaAtiva = true
-        bombaX, bombaY := jogo.Entidades[0].X, jogo.Entidades[0].Y
-
-        // Envia uma solicitação para colocar a bomba no mapa
-        jogo.AcessoMapa <- AtualizacaoMapa{X: bombaX, Y: bombaY, Elem: Bomba}
-        jogo.StatusMsg = "Bomba plantada! Corra!"
-
-        // Inicia a goroutine da bomba, que cuidará da explosão
-        go gerenciarBomba(jogo, bombaX, bombaY)
-
-    } else {
-        jogo.StatusMsg = "Aguarde a bomba anterior explodir!"
-    }
-}
-
-
 // Processa eventos de teclado e executa ações do personagem
 func personagemExecutarAcao(ev EventoTeclado, jogo *Jogo, chanVida chan int) bool {
 	switch ev.Tipo {
 	case "sair":
 		// Termina o jogo
 		return false
-
-	case "interagir":
-		//Persongaem Coloca Bomba
-        personagemInteragir(jogo)
 
 	case "mover":
 		// Executa movimento do personagem

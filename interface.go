@@ -68,17 +68,11 @@ func interfaceLerEventoTeclado() EventoTeclado {
 		return EventoTeclado{Tipo: "sair"}
 	}
 	
-<<<<<<< HEAD
-	if ev.Ch == 'e' {
-		return EventoTeclado{Tipo: "interagir"}
-	}
-=======
 	// Detecta tecla E para colocar bomba
 	if ev.Ch == 'e' || ev.Ch == 'E' {
 		return EventoTeclado{Tipo: "bomba", Tecla: ev.Ch}
 	}
 	
->>>>>>> Pedro
 	// Para outras teclas, retorna como evento de movimento
 	return EventoTeclado{Tipo: "mover", Tecla: ev.Ch}
 }
